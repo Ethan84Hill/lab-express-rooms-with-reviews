@@ -3,6 +3,7 @@ var router = express.Router();
 const bcryptjs = require('bcryptjs');
 var User = require('../models/User.model');
 const Room = require('../models/Room.model');
+const isLoggedIn = require('../middleware/isLoggedIn')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -98,7 +99,7 @@ router.get("/room/create", (req, res, next) => {
   res.render('create-room')
 });
 
-router.post('/room/create', (req, res, next) => {
+router.post('/room/create', isLoggedIn, (req, res, next) => {
   console.log(req.body)
   Room.create({
       name: req.body.name,
@@ -117,7 +118,13 @@ router.post('/room/create', (req, res, next) => {
 
 
 router.get('/list-rooms', (req, res, next) => {
-  res.render('list-rooms.hbs', {name: name})
+  Room.find()
+  .then((foundRooms) => {
+    res.render('list-rooms.hbs', {foundRooms})
+  })
+  .catch((err) => {
+    console.log(err)
+  })
 })
 
 module.exports = router;
