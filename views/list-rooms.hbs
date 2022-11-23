@@ -1,17 +1,31 @@
 <h2> List of Rooms </h2>
 
+{{#if message}}
+    <h3>{{message}}</h3>
+{{/if}}
+
 <ul>
     {{#each foundRooms }}
         <li> <a href="/rooms/{{id}}"> {{ this.name }} </a></li>
         <p>{{description}}</p>
         <img src="{{imageUrl}}" alt="room image">
 
-        <form action="/rooms/{{_id}}/edit-room" method="post">
-            <button>Edit</button>
+        {{#each reviews}}
+            <h4>{{user}}</h4>
+            <p>- {{comment}}</p>
+            <br>
+        {{/each}}
+
+        <form action="/reviews/{{_id}}/add-reviews" method="get">
+            <button>Add Review</button>
+        </form>
+
+        <form action="/rooms/{{_id}}/edit-room" method="get">
+            <button type="submit">Edit</button>
         </form>
 
         <form action="/rooms/{{_id}}/delete" method="post">
-            <button>Delete</button>
+            <button type="submit">Delete</button>
         </form>
     {{/each}}
 </ul>

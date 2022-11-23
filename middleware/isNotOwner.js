@@ -1,9 +1,9 @@
 const Room = require('../models/Room.model')
 
-const isOwner = (req, res, next) => {
+const isNotOwner = (req, res, next) => {
     Room.findById(req.params.id)
     .then((foundRoom) => {
-        if(String(foundRoom.owner) === req.session.user._id) {
+        if(String(foundRoom.owner) !== req.session.user._id) {
             next()
         } else {
             res.render('list-rooms', {message: "You do not have permission"})
@@ -14,4 +14,4 @@ const isOwner = (req, res, next) => {
     })
 }
     
-    module.exports = isOwner
+    module.exports = isNotOwner

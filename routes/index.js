@@ -4,6 +4,9 @@ const bcryptjs = require('bcryptjs');
 var User = require('../models/User.model');
 const Room = require('../models/Room.model');
 const isLoggedIn = require('../middleware/isLoggedIn')
+const isOwner = require('../middleware/isOwner')
+const Review = require('../models/Review.model')
+const isNotOwner = require('../middleware/isNotOwner')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -119,6 +122,12 @@ router.post('/room/create', isLoggedIn, (req, res, next) => {
 
 router.get('/list-rooms', (req, res, next) => {
   Room.find()
+  .populate({
+    path: "reviews",
+    populate: {
+      path: "user",
+    },
+  })
   .then((foundRooms) => {
     res.render('list-rooms.hbs', {foundRooms})
   })
@@ -126,5 +135,70 @@ router.get('/list-rooms', (req, res, next) => {
     console.log(err)
   })
 })
+
+router.post('/rooms/:id/delete', isOwner, (req, res, next) => {
+  Room.findById(req.params.id)
+    .then((foundRoom) => {
+        foundRoom.delete()
+        res.redirect('/')
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+})
+
+router.get('/rooms/:id/edit-room', isOwner, (req, res, next) => {
+  Room.findById(req.params.id)
+    .then((foundRoom) => {
+      res.render('edit-room', foundRoom)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+})
+
+router.post('/rooms/:id/edit-room', isOwner, (req, res, next) => {
+  Room.findByIdAndUpdate(req.params.id, {
+    name: req.body.name,
+    description: req.body.description,
+    imageUrl: req.body.imageUrl
+  }, {new: true})
+  .then((updatedRoom) => {
+    console.log("changed room:", updatedRoom)
+    res.redirect('/')
+  })
+  .catch((err) => {
+    console.log(err)
+  })
+})
+
+router.get('/:id/add-reviews', isNotOwner, (req, res, next) => {
+  res.render('add-review', {_id: req.params.id})
+})
+
+router.post('/add-reviews', isNotOwner, (req, res, next) => {
+  Review.create({
+    user: req.session.user._id,
+    comment: req.body.comment
+  })
+  .then((newReview) => {
+    Room.findByIdAndUpdate(
+      req.params.id, 
+      { $addToSet: { reviews: newReview._id } }
+      , {new: true}
+      )
+      .then((updatedRoom) => {
+        console.log('new review', updatedRoom)
+        res.redirect('/')
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  })
+  .catch((err) => {
+    console.log(err)
+  })
+})
+
 
 module.exports = router;
